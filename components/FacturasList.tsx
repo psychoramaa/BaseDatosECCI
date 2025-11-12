@@ -1,18 +1,17 @@
-'use client' // Indica que este componente se ejecuta en el cliente (Next.js con React Server Components)
+'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase' // Conexión al backend Supabase
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useToast } from '@/components/ui/use-toast' // Hook para mostrar notificaciones
-import { Trash2, Edit, Plus, Eye, Download } from 'lucide-react' // Iconos
-import DetalleFactura from '@/components/DetalleFactura' // Componente para mostrar el detalle de una factura
-import { generarPDFFactura } from '@/lib/pdf-generator' // Función para generar el PDF de una factura
+import { useToast } from '@/components/ui/use-toast'
+import { Trash2, Edit, Plus, Eye, Download } from 'lucide-react'
+import DetalleFactura from '@/components/DetalleFactura'
+import { generarPDFFactura } from '@/lib/pdf-generator'
 
-// Estructura de la factura
 interface Factura {
   id: string
   numero: string
@@ -23,23 +22,19 @@ interface Factura {
   user_id: string
 }
 
-// Propiedades que recibe el componente principal
 interface FacturasListProps {
   userId: string
 }
 
-// Componente principal que muestra la lista de facturas
 export default function FacturasList({ userId }: FacturasListProps) {
-  // Estados locales
-  const [facturas, setFacturas] = useState<Factura[]>([]) // Lista de facturas
-  const [loading, setLoading] = useState(true) // Indicador de carga
-  const [isDialogOpen, setIsDialogOpen] = useState(false) // Control del modal de creación/edición
-  const [editingFactura, setEditingFactura] = useState<Factura | null>(null) // Factura en edición
-  const [detalleFactura, setDetalleFactura] = useState<Factura | null>(null) // Factura a mostrar en detalle
-  const [isDetalleOpen, setIsDetalleOpen] = useState(false) // Control del modal de detalle
-  const { toast } = useToast() // Hook para mostrar mensajes toast
+  const [facturas, setFacturas] = useState<Factura[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingFactura, setEditingFactura] = useState<Factura | null>(null)
+  const [detalleFactura, setDetalleFactura] = useState<Factura | null>(null)
+  const [isDetalleOpen, setIsDetalleOpen] = useState(false)
+  const { toast } = useToast()
 
-  // Estado para el formulario
   const [formData, setFormData] = useState({
     numero: '',
     cliente: '',
@@ -48,12 +43,15 @@ export default function FacturasList({ userId }: FacturasListProps) {
     concepto: '',
   })
 
-  // Carga las facturas cuando cambia el usuario
+  // Limites
+  const MAX_NUMERO = 20
+  const MAX_CLIENTE = 50
+  const MAX_CONCEPTO = 100
+
   useEffect(() => {
     loadFacturas()
   }, [userId])
 
-  // Función para cargar facturas desde Supabase
   const loadFacturas = async () => {
     try {
       const { data, error } = await supabase
@@ -75,12 +73,30 @@ export default function FacturasList({ userId }: FacturasListProps) {
     }
   }
 
-  // Maneja el envío del formulario (crear o actualizar factura)
+  // Validaciones básicas antes de enviar
+  function validateForm() {
+    if (formData.numero.length > MAX_NUMERO) return 'El número de factura es demasiado largo.'
+    if (formData.cliente.length > MAX_CLIENTE) return 'El nombre del cliente es demasiado largo.'
+    if (formData.concepto.length > MAX_CONCEPTO) return 'El concepto es demasiado largo.'
+    if (formData.numero.trim() === '' || formData.cliente.trim() === '' || formData.concepto.trim() === '') return 'Todos los campos son obligatorios.'
+    if (isNaN(parseFloat(formData.monto)) || parseFloat(formData.monto) <= 0) return 'El monto debe ser un número mayor a 0.'
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.fecha)) return 'La fecha debe estar en formato YYYY-MM-DD.'
+    return null
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    const errorMsg = validateForm()
+    if (errorMsg) {
+      toast({
+        title: 'Error de validación',
+        description: errorMsg,
+        variant: 'destructive',
+      })
+      return
+    }
     try {
       if (editingFactura) {
-        // Si estamos editando, actualiza la factura
         const { error } = await supabase
           .from('facturas')
           .update({
@@ -98,7 +114,6 @@ export default function FacturasList({ userId }: FacturasListProps) {
           description: 'Factura actualizada correctamente',
         })
       } else {
-        // Si no hay factura en edición, crea una nueva
         const { error } = await supabase
           .from('facturas')
           .insert({
@@ -117,7 +132,6 @@ export default function FacturasList({ userId }: FacturasListProps) {
         })
       }
 
-      // Cierra el modal, limpia el formulario y recarga la lista
       setIsDialogOpen(false)
       resetForm()
       loadFacturas()
@@ -130,7 +144,6 @@ export default function FacturasList({ userId }: FacturasListProps) {
     }
   }
 
-  // Carga los datos de una factura seleccionada para edición
   const handleEdit = (factura: Factura) => {
     setEditingFactura(factura)
     setFormData({
@@ -143,7 +156,6 @@ export default function FacturasList({ userId }: FacturasListProps) {
     setIsDialogOpen(true)
   }
 
-  // Elimina una factura
   const handleDelete = async (id: string) => {
     if (!confirm('¿Estás seguro de eliminar esta factura?')) return
 
@@ -168,7 +180,6 @@ export default function FacturasList({ userId }: FacturasListProps) {
     }
   }
 
-  // Reinicia el formulario
   const resetForm = () => {
     setFormData({
       numero: '',
@@ -180,19 +191,16 @@ export default function FacturasList({ userId }: FacturasListProps) {
     setEditingFactura(null)
   }
 
-  // Abre el diálogo para crear una nueva factura
   const openNewDialog = () => {
     resetForm()
     setIsDialogOpen(true)
   }
 
-  // Abre el detalle de una factura
   const handleVerDetalle = (factura: Factura) => {
     setDetalleFactura(factura)
     setIsDetalleOpen(true)
   }
 
-  // Genera y descarga el PDF de una factura
   const handleDownloadPDF = (factura: Factura) => {
     try {
       generarPDFFactura({
@@ -215,15 +223,12 @@ export default function FacturasList({ userId }: FacturasListProps) {
     }
   }
 
-  // Muestra un texto de carga mientras se obtienen las facturas
   if (loading) {
     return <div className="text-center py-8">Cargando facturas...</div>
   }
 
-  // Renderizado principal del componente
   return (
     <div>
-      {/* Modal de detalle de factura */}
       <DetalleFactura
         factura={detalleFactura}
         isOpen={isDetalleOpen}
@@ -233,7 +238,6 @@ export default function FacturasList({ userId }: FacturasListProps) {
         }}
       />
 
-      {/* Botón para crear nueva factura */}
       <div className="mb-6">
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open)
@@ -246,7 +250,6 @@ export default function FacturasList({ userId }: FacturasListProps) {
             </Button>
           </DialogTrigger>
 
-          {/* Contenido del modal de creación/edición */}
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
@@ -258,11 +261,8 @@ export default function FacturasList({ userId }: FacturasListProps) {
                   : 'Completa los datos para crear una nueva factura'}
               </DialogDescription>
             </DialogHeader>
-
-            {/* Formulario de factura */}
             <form onSubmit={handleSubmit}>
               <div className="grid gap-4 py-4">
-                {/* Campo número */}
                 <div className="grid gap-2">
                   <Label htmlFor="numero">Número de Factura</Label>
                   <Input
@@ -270,10 +270,12 @@ export default function FacturasList({ userId }: FacturasListProps) {
                     value={formData.numero}
                     onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
                     required
+                    maxLength={MAX_NUMERO}
                   />
+                  <span className="text-xs text-muted-foreground">
+                    Máx. {MAX_NUMERO} caracteres
+                  </span>
                 </div>
-
-                {/* Campo cliente */}
                 <div className="grid gap-2">
                   <Label htmlFor="cliente">Cliente</Label>
                   <Input
@@ -281,10 +283,12 @@ export default function FacturasList({ userId }: FacturasListProps) {
                     value={formData.cliente}
                     onChange={(e) => setFormData({ ...formData, cliente: e.target.value })}
                     required
+                    maxLength={MAX_CLIENTE}
                   />
+                  <span className="text-xs text-muted-foreground">
+                    Máx. {MAX_CLIENTE} caracteres
+                  </span>
                 </div>
-
-                {/* Campo monto */}
                 <div className="grid gap-2">
                   <Label htmlFor="monto">Monto</Label>
                   <Input
@@ -294,10 +298,9 @@ export default function FacturasList({ userId }: FacturasListProps) {
                     value={formData.monto}
                     onChange={(e) => setFormData({ ...formData, monto: e.target.value })}
                     required
+                    min="0.01"
                   />
                 </div>
-
-                {/* Campo fecha */}
                 <div className="grid gap-2">
                   <Label htmlFor="fecha">Fecha</Label>
                   <Input
@@ -308,8 +311,6 @@ export default function FacturasList({ userId }: FacturasListProps) {
                     required
                   />
                 </div>
-
-                {/* Campo concepto */}
                 <div className="grid gap-2">
                   <Label htmlFor="concepto">Concepto</Label>
                   <Input
@@ -317,11 +318,13 @@ export default function FacturasList({ userId }: FacturasListProps) {
                     value={formData.concepto}
                     onChange={(e) => setFormData({ ...formData, concepto: e.target.value })}
                     required
+                    maxLength={MAX_CONCEPTO}
                   />
+                  <span className="text-xs text-muted-foreground">
+                    Máx. {MAX_CONCEPTO} caracteres
+                  </span>
                 </div>
               </div>
-
-              {/* Botones del modal */}
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
@@ -335,7 +338,6 @@ export default function FacturasList({ userId }: FacturasListProps) {
         </Dialog>
       </div>
 
-      {/* Si no hay facturas, muestra un mensaje */}
       {facturas.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center">
@@ -346,14 +348,12 @@ export default function FacturasList({ userId }: FacturasListProps) {
           </CardContent>
         </Card>
       ) : (
-        // Si hay facturas, las muestra en tarjetas
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {facturas.map((factura) => (
             <Card key={factura.id}>
               <CardHeader>
                 <CardTitle className="flex justify-between items-start">
                   <span>Factura #{factura.numero}</span>
-                  {/* Botones de acción */}
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleVerDetalle(factura)} title="Ver detalle">
                       <Eye className="h-4 w-4" />
@@ -372,7 +372,6 @@ export default function FacturasList({ userId }: FacturasListProps) {
                 <CardDescription>{factura.cliente}</CardDescription>
               </CardHeader>
 
-              {/* Información de la factura */}
               <CardContent>
                 <div className="space-y-2">
                   <p className="text-sm">
@@ -386,8 +385,6 @@ export default function FacturasList({ userId }: FacturasListProps) {
                     <span className="font-medium">Concepto:</span> {factura.concepto}
                   </p>
                 </div>
-
-                {/* Botones secundarios */}
                 <div className="mt-4 flex gap-2">
                   <Button variant="outline" size="sm" className="flex-1" onClick={() => handleVerDetalle(factura)}>
                     <Eye className="mr-2 h-4 w-4" />
