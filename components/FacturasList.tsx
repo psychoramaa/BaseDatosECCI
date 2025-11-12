@@ -12,7 +12,7 @@ import { Trash2, Edit, Plus, Eye, Download } from 'lucide-react' // Iconos
 import DetalleFactura from '@/components/DetalleFactura' // Componente para mostrar el detalle de una factura
 import { generarPDFFactura } from '@/lib/pdf-generator' // Función para generar el PDF de una factura
 
-// Interfaz que define la estructura de una factura
+// Estructura de la factura
 interface Factura {
   id: string
   numero: string
@@ -59,8 +59,8 @@ export default function FacturasList({ userId }: FacturasListProps) {
       const { data, error } = await supabase
         .from('facturas')
         .select('*')
-        .eq('user_id', userId) // Filtra por usuario
-        .order('fecha', { ascending: false }) // Ordena por fecha descendente
+        .eq('user_id', userId)
+        .order('fecha', { ascending: false })
 
       if (error) throw error
       setFacturas(data || [])
