@@ -7,7 +7,10 @@ import {
   FileText, 
   Settings, 
   LogOut,
-  Menu
+  Menu,
+  BookOpen,
+  BarChart3,
+  Calendar
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -24,20 +27,30 @@ interface SidebarProps {
 
 const menuItems = [
   {
-    title: 'Dashboard',
-    icon: LayoutDashboard,
-    href: '/',
+    title: 'Cronograma',
+    icon: Calendar,
+    href: '/cronograma',
   },
   {
-    title: 'Facturas',
-    icon: FileText,
-    href: '/facturas',
+    title: 'Manual de Usuario',
+    icon: BookOpen,
+    href: '/manual',
   },
   {
-    title: 'Configuración',
-    icon: Settings,
-    href: '/configuracion',
+    title: 'Indicadores',
+    icon: BarChart3,
+    href: '/indicadores',
   },
+  // {
+  //   title: 'Facturas',
+  //   icon: FileText,
+  //   href: '/facturas',
+  // },
+  // {
+  //   title: 'Configuración',
+  //   icon: Settings,
+  //   href: '/configuracion',
+  // },
 ]
 
 export function Sidebar({ userEmail, onLogout }: SidebarProps) {
@@ -63,7 +76,7 @@ export function Sidebar({ userEmail, onLogout }: SidebarProps) {
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
       <div className="flex h-16 items-center border-b px-6">
-        <h1 className="text-xl font-bold">Facturas App</h1>
+        <h1 className="text-xl font-bold">InnovaTech S.A.S.</h1>
       </div>
       
       <nav className="flex-1 space-y-1 p-4">

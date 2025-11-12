@@ -5,8 +5,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Facturación',
-  description: 'Gestión de facturas',
+  title: 'InnovaTech S.A.S. - Transformación Digital',
+  description: 'Gestión de cambios en requerimientos - Proyecto de Transformación Digital',
 }
 
 export default function RootLayout({
