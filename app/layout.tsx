@@ -5,8 +5,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'App de Facturas',
-  description: 'Gestión de facturas con Supabase',
+  title: 'Facturación',
+  description: 'Gestión de facturas',
 }
 
 export default function RootLayout({
